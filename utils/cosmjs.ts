@@ -1,4 +1,4 @@
-import { toBech32 } from "@cosmjs/encoding";
+import { fromHex, toBech32 } from "@cosmjs/encoding";
 import { sha256 } from "@cosmjs/crypto";
 import {
   DirectSecp256k1Wallet,
@@ -6,11 +6,11 @@ import {
 } from "@cosmjs/proto-signing";
 import { SigningStargateClient, StargateClient, coins } from "@cosmjs/stargate";
 import { RPC_ENDPOINTS } from "../constants";
+import { encodeSecp256k1Pubkey, pubkeyToAddress } from "@cosmjs/amino";
 
 export function publicKeyToAddress(pubKeyHex: string, prefix = "wf") {
-  const pubKeyBytes = new Uint8Array(Buffer.from(pubKeyHex, "hex"));
-  const hash = sha256(pubKeyBytes); // Take SHA256 hash of public key
-  const address = toBech32(prefix, hash.slice(0, 20)); // Convert to Bech32 address
+  const pk = encodeSecp256k1Pubkey(fromHex(pubKeyHex));
+  const address = pubkeyToAddress(pk, prefix);
   return address;
 }
 
@@ -61,11 +61,5 @@ export const sendTokens = async (
   };
 
   // Send the tokens
-  return client.sendTokens(
-    senderAddress,
-    recipientAddress,
-    amountToSend,
-    fee,
-    "Token transfer" // Optional memo
-  );
+  return client.sendTokens(senderAddress, recipientAddress, amountToSend, fee);
 };
